@@ -14,15 +14,15 @@ import (
 
 func newExportCmd() *cobra.Command {
 	var (
-		user            string
-		format          string
-		sortBy          string
-		templatePath    string
-		outputPath      string
-		uncategorized   string
-		skipUncategoriz bool
-		quiet           bool
-		jobs            int
+		user              string
+		format            string
+		sortBy            string
+		templatePath      string
+		outputPath        string
+		uncategorized     string
+		skipUncategorized bool
+		quiet             bool
+		jobs              int
 	)
 
 	cmd := &cobra.Command{
@@ -76,7 +76,7 @@ With --template, the generated Markdown replaces the <!-- gh-starlist-export -->
 				sections = append(sections, render.Section{Name: list.Name, Repos: listRepos[index]})
 			}
 
-			if !skipUncategoriz {
+			if !skipUncategorized {
 				bar.stage("Reading starred repositories")
 				starred, err := client.Starred(user, 0)
 				if err != nil {
@@ -126,7 +126,7 @@ With --template, the generated Markdown replaces the <!-- gh-starlist-export -->
 	cmd.Flags().StringVar(&templatePath, "template", "", "Markdown template holding a <!-- gh-starlist-export --> placeholder")
 	cmd.Flags().StringVarP(&outputPath, "output", "o", "", "Write to this file instead of stdout")
 	cmd.Flags().StringVar(&uncategorized, "uncategorized-title", "Uncategorized", "Heading for starred repositories in no list")
-	cmd.Flags().BoolVar(&skipUncategoriz, "no-uncategorized", false, "Omit the section of starred repositories in no list")
+	cmd.Flags().BoolVar(&skipUncategorized, "no-uncategorized", false, "Omit the section of starred repositories in no list")
 	cmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "Do not show fetch progress on stderr")
 	cmd.Flags().IntVarP(&jobs, "jobs", "j", starlist.DefaultWorkers, "How many star lists to read at once")
 	return cmd
