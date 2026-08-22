@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/eggplants/gh-starlist/internal/starlist"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +18,7 @@ func newCreateCmd() *cobra.Command {
 		Short: "Create a star list",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(_ *cobra.Command, args []string) error {
-			client, err := starlist.NewClient()
+			client, err := newClient()
 			if err != nil {
 				return err
 			}

@@ -10,13 +10,13 @@ depends = ["ci"]
 depends = ["vet", "test", "fmt"]
 
 [tasks.vet]
-run = "go vet"
+run = "go vet ./..."
 
 [tasks.test]
-run = "go test"
+run = "go test ./..."
 
 [tasks.build]
 run = "go build"
 
 [tasks.fmt]
-run = "go fmt"
+run = "go fmt ./..."

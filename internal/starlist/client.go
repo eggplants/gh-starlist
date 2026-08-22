@@ -17,11 +17,22 @@ type Client struct {
 
 // NewClient builds a client from the gh CLI authentication.
 func NewClient() (*Client, error) {
-	gql, err := api.NewGraphQLClient(api.ClientOptions{
-		// Ask for the modern node ID format; the legacy one is deprecated and
-		// makes the API answer with a deprecation warning for repository IDs.
-		Headers: map[string]string{"X-Github-Next-Global-ID": "1"},
-	})
+	return NewClientWithOptions(api.ClientOptions{})
+}
+
+// NewClientWithOptions builds a client from explicit API options, adding the
+// headers every star list query needs. Tests use it to supply a transport.
+func NewClientWithOptions(options api.ClientOptions) (*Client, error) {
+	headers := make(map[string]string, len(options.Headers)+1)
+	for key, value := range options.Headers {
+		headers[key] = value
+	}
+	// Ask for the modern node ID format; the legacy one is deprecated and
+	// makes the API answer with a deprecation warning for repository IDs.
+	headers["X-Github-Next-Global-ID"] = "1"
+	options.Headers = headers
+
+	gql, err := api.NewGraphQLClient(options)
 	if err != nil {
 		return nil, err
 	}

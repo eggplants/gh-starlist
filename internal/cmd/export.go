@@ -39,7 +39,7 @@ With --template, the generated Markdown replaces the <!-- gh-starlist-export -->
 				return err
 			}
 
-			client, err := starlist.NewClient()
+			client, err := newClient()
 			if err != nil {
 				return err
 			}

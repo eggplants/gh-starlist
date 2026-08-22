@@ -11,6 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// newClient builds the client every command talks through. It is a variable so
+// tests can stand in a client backed by a canned transport.
+var newClient = starlist.NewClient
+
 // NewRoot builds the `gh starlist` command tree.
 func NewRoot(version string) *cobra.Command {
 	root := &cobra.Command{
@@ -62,7 +66,7 @@ func parseRepo(arg string) (owner, name string, err error) {
 
 // resolve is the shared "client plus one list" preamble of most commands.
 func resolve(user, key string) (*starlist.Client, starlist.List, error) {
-	client, err := starlist.NewClient()
+	client, err := newClient()
 	if err != nil {
 		return nil, starlist.List{}, err
 	}

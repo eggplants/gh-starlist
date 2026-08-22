@@ -23,7 +23,7 @@ func newListCmd() *cobra.Command {
 		Long:    "List star lists. Another user's private lists are never visible.",
 		Args:    cobra.NoArgs,
 		RunE: func(*cobra.Command, []string) error {
-			client, err := starlist.NewClient()
+			client, err := newClient()
 			if err != nil {
 				return err
 			}

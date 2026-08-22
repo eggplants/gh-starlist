@@ -15,7 +15,7 @@ type mover func(membership starlist.Membership, repo starlist.RepoRef, list star
 // complete set of lists a repository belongs to, so the current set has to be
 // read first, which means walking every list the user owns.
 func moveRepos(listKey string, args []string, star bool, done string, move mover) error {
-	client, err := starlist.NewClient()
+	client, err := newClient()
 	if err != nil {
 		return err
 	}
