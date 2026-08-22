@@ -91,11 +91,6 @@ mutation DeleteList($listId: ID!) {
 ### 1. Look up the repository's node ID and star state
 
 ```bash
-# Option 1: REST
-gh api repos/OWNER/REPO --jq '{node_id, full_name}'
-gh api --silent user/starred/OWNER/REPO   # exit 0 (204) = starred / exit 1 (404) = not starred
-
-# Option 2: GraphQL
 gh api graphql -f owner=OWNER -f name=REPO -f query='
 query RepoRef($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) { id nameWithOwner viewerHasStarred }
