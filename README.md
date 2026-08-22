@@ -1,6 +1,22 @@
 # gh-starlist
 
+[![Go Reference](
+  <https://pkg.go.dev/badge/github.com/eggplants/gh-starlist.svg>
+)](
+  <https://pkg.go.dev/github.com/eggplants/gh-starlist>
+) [![ci](
+  <https://github.com/eggplants/gh-starlist/actions/workflows/ci.yml/badge.svg>
+)](
+  <https://github.com/eggplants/gh-starlist/actions/workflows/ci.yml>
+) [![release](
+  <https://github.com/eggplants/gh-starlist/actions/workflows/release.yml/badge.svg>
+)](
+  <https://github.com/eggplants/gh-starlist/actions/workflows/release.yml>
+) 
+
 A [GitHub CLI](https://cli.github.com) extension for [GitHub Star List](https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars#organizing-starred-repositories-with-lists)
+
+_For information on the GitHub API we're using, see [QUERIES.md](QUERIES.md)._
 
 ## Installation
 
