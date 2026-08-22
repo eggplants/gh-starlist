@@ -22,7 +22,7 @@ _For information on the GitHub API we're using, see [QUERIES.md](QUERIES.md)._
 
 ```bash
 gh extension install eggplants/gh-starlist
-gh auth refresh -h github.com -s user
+gh auth status | grep -qF "'user'" || gh auth refresh -h github.com -s user
 ```
 
 ## Usage
