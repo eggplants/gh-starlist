@@ -45,9 +45,7 @@ $ gh starlist edit rust-tools --name "Rust CLI" --public
 $ gh starlist delete rust-cli
 ```
 
-A list is addressed by its name or by its slug, case-insensitively: `cli-tui`, `CLI/TUI` and `cli/tui` all mean the same list.
-
-### Commands
+<details><summary>Commands</summary>
 
 | Command | Description |
 | --- | --- |
@@ -67,7 +65,9 @@ gh starlist list --user zhuozhiyongde --json | jq -r '.[].slug'
 gh starlist view rdf --json | jq -r '.repos[].nameWithOwner'
 ```
 
-### Export
+</details>
+
+### Export as a Markdown
 
 `export` renders every list, plus the starred repositories that are in no list, as a Markdown document with a table of contents:
 
