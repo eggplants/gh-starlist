@@ -6,6 +6,7 @@ const viewerStarredQuery = `
 query ViewerStarred($first: Int!, $after: String) {
 	viewer {
 		starredRepositories(first: $first, after: $after, orderBy: {field: STARRED_AT, direction: DESC}) {
+			totalCount
 			pageInfo { hasNextPage endCursor }
 			edges { starredAt node { %s } }
 		}
@@ -16,6 +17,7 @@ const userStarredQuery = `
 query UserStarred($login: String!, $first: Int!, $after: String) {
 	user(login: $login) {
 		starredRepositories(first: $first, after: $after, orderBy: {field: STARRED_AT, direction: DESC}) {
+			totalCount
 			pageInfo { hasNextPage endCursor }
 			edges { starredAt node { %s } }
 		}
@@ -23,8 +25,9 @@ query UserStarred($login: String!, $first: Int!, $after: String) {
 }`
 
 type starredConnection struct {
-	PageInfo pageInfo
-	Edges    []struct {
+	TotalCount int
+	PageInfo   pageInfo
+	Edges      []struct {
 		StarredAt string
 		Node      repoNode
 	}
@@ -65,6 +68,7 @@ func (c *Client) Starred(user string, limit int) ([]Repo, error) {
 			repo.StarredAt = edge.StarredAt
 			repos = append(repos, repo)
 		}
+		c.report(len(repos), conn.TotalCount)
 		if !conn.PageInfo.HasNextPage {
 			break
 		}

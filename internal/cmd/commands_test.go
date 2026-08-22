@@ -296,13 +296,13 @@ const repoRefDelta = `{"data":{"repository":{"id":"R_delta","nameWithOwner":"dan
 
 // listMembership answers the two ListRepos calls Membership makes over the two
 // canned lists: delta sits in CLI/TUI, nothing in Python Utils.
-var listMembership = []string{
-	`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[{"nameWithOwner":"dandavison/delta"}]}}}}`,
-	`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[]}}}}`,
+var listMembership = []interface{}{
+	listItems{"L_1", `{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[{"nameWithOwner":"dandavison/delta"}]}}}}`},
+	listItems{"L_2", `{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[]}}}}`},
 }
 
 func TestAddPutsARepoInAListKeepingItsOtherLists(t *testing.T) {
-	bodies := append([]string{twoLists, repoRefDelta}, listMembership...)
+	bodies := append([]interface{}{twoLists, repoRefDelta}, listMembership...)
 	bodies = append(bodies, `{"data":{"updateUserListsForItem":{"lists":[{"id":"L_1"},{"id":"L_2"}]}}}`)
 	transport := stubGitHub(t, bodies...)
 
@@ -327,7 +327,7 @@ func TestAddPutsARepoInAListKeepingItsOtherLists(t *testing.T) {
 }
 
 func TestAddIsANoOpWhenTheRepoIsAlreadyInTheList(t *testing.T) {
-	bodies := append([]string{twoLists, repoRefDelta}, listMembership...)
+	bodies := append([]interface{}{twoLists, repoRefDelta}, listMembership...)
 	transport := stubGitHub(t, bodies...)
 
 	out, err := run(t, "add", "cli-tui", "dandavison/delta")
@@ -345,7 +345,7 @@ func TestAddIsANoOpWhenTheRepoIsAlreadyInTheList(t *testing.T) {
 
 func TestAddStarsARepoThatIsNotStarredYet(t *testing.T) {
 	unstarred := `{"data":{"repository":{"id":"R_new","nameWithOwner":"a/new","viewerHasStarred":false}}}`
-	bodies := append([]string{twoLists, unstarred}, listMembership...)
+	bodies := append([]interface{}{twoLists, unstarred}, listMembership...)
 	bodies = append(bodies,
 		`{"data":{"updateUserListsForItem":{"lists":[{"id":"L_1"}]}}}`,
 		`{"data":{"addStar":{"starrable":{"id":"R_new"}}}}`,
@@ -371,7 +371,7 @@ func TestAddStarsARepoThatIsNotStarredYet(t *testing.T) {
 
 func TestAddWithNoStarLeavesTheRepoUnstarred(t *testing.T) {
 	unstarred := `{"data":{"repository":{"id":"R_new","nameWithOwner":"a/new","viewerHasStarred":false}}}`
-	bodies := append([]string{twoLists, unstarred}, listMembership...)
+	bodies := append([]interface{}{twoLists, unstarred}, listMembership...)
 	bodies = append(bodies, `{"data":{"updateUserListsForItem":{"lists":[{"id":"L_1"}]}}}`)
 	transport := stubGitHub(t, bodies...)
 
@@ -403,11 +403,9 @@ func TestAddRejectsAMalformedRepositoryBeforeMutating(t *testing.T) {
 
 func TestRemoveTakesARepoOutOfOneListOnly(t *testing.T) {
 	// delta sits in both lists; removing it from CLI/TUI must leave L_2.
-	membership := []string{
-		`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[{"nameWithOwner":"dandavison/delta"}]}}}}`,
-		`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[{"nameWithOwner":"dandavison/delta"}]}}}}`,
-	}
-	bodies := append([]string{twoLists, repoRefDelta}, membership...)
+	inBoth := `{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[{"nameWithOwner":"dandavison/delta"}]}}}}`
+	membership := []interface{}{listItems{"L_1", inBoth}, listItems{"L_2", inBoth}}
+	bodies := append([]interface{}{twoLists, repoRefDelta}, membership...)
 	bodies = append(bodies, `{"data":{"updateUserListsForItem":{"lists":[{"id":"L_2"}]}}}`)
 	transport := stubGitHub(t, bodies...)
 
@@ -428,7 +426,7 @@ func TestRemoveTakesARepoOutOfOneListOnly(t *testing.T) {
 
 func TestRemoveNeverStars(t *testing.T) {
 	unstarred := `{"data":{"repository":{"id":"R_delta","nameWithOwner":"dandavison/delta","viewerHasStarred":false}}}`
-	bodies := append([]string{twoLists, unstarred}, listMembership...)
+	bodies := append([]interface{}{twoLists, unstarred}, listMembership...)
 	bodies = append(bodies, `{"data":{"updateUserListsForItem":{"lists":[]}}}`)
 	transport := stubGitHub(t, bodies...)
 

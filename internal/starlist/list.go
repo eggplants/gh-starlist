@@ -20,6 +20,7 @@ const viewerListsQuery = `
 query ViewerLists($first: Int!, $after: String) {
 	viewer {
 		lists(first: $first, after: $after) {
+			totalCount
 			pageInfo { hasNextPage endCursor }
 			nodes { %s }
 		}
@@ -30,6 +31,7 @@ const userListsQuery = `
 query UserLists($login: String!, $first: Int!, $after: String) {
 	user(login: $login) {
 		lists(first: $first, after: $after) {
+			totalCount
 			pageInfo { hasNextPage endCursor }
 			nodes { %s }
 		}
@@ -37,8 +39,9 @@ query UserLists($login: String!, $first: Int!, $after: String) {
 }`
 
 type listsConnection struct {
-	PageInfo pageInfo
-	Nodes    []struct {
+	TotalCount int
+	PageInfo   pageInfo
+	Nodes      []struct {
 		ID          string
 		Name        string
 		Slug        string
@@ -95,6 +98,7 @@ func (c *Client) Lists(user string, limit int) ([]List, error) {
 				UpdatedAt:   node.UpdatedAt,
 			})
 		}
+		c.report(len(lists), conn.TotalCount)
 		if !conn.PageInfo.HasNextPage {
 			break
 		}

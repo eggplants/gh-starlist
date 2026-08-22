@@ -58,13 +58,6 @@ $ gh starlist delete rust-cli
 | `gh starlist remove <list> <repo>...` | Remove repositories from a list |
 | `gh starlist export` | Export every list as Markdown or JSON |
 
-`list` and `view` take `--json` for scripting, and `--user` to read someone else's lists (their private lists are never visible):
-
-```bash
-gh starlist list --user zhuozhiyongde --json | jq -r '.[].slug'
-gh starlist view rdf --json | jq -r '.repos[].nameWithOwner'
-```
-
 </details>
 
 ### Export as a Markdown

@@ -15,14 +15,14 @@ import (
 // delta is in CLI/TUI, requests is in Python Utils, and the starred set adds
 // fd, which is in no list. The two connections spell delta differently, which
 // pins down that the uncategorized section matches names case insensitively.
-var exportBodies = []string{
+var exportBodies = []interface{}{
 	twoLists,
-	`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[
+	listItems{"L_1", `{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[
 		{"nameWithOwner":"DanDavison/Delta","description":"A pager","url":"https://github.com/dandavison/delta","stargazerCount":31830}
-	]}}}}`,
-	`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[
+	]}}}}`},
+	listItems{"L_2", `{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[
 		{"nameWithOwner":"psf/requests","description":"HTTP for humans","url":"https://github.com/psf/requests","stargazerCount":52000}
-	]}}}}`,
+	]}}}}`},
 	`{"data":{"viewer":{"starredRepositories":{"pageInfo":{"hasNextPage":false},"edges":[
 		{"starredAt":"2024-03-03T00:00:00Z","node":{"nameWithOwner":"sharkdp/fd","description":"A find alternative","url":"https://github.com/sharkdp/fd","stargazerCount":34000}},
 		{"starredAt":"2024-02-02T00:00:00Z","node":{"nameWithOwner":"dandavison/delta","description":"A pager","url":"https://github.com/dandavison/delta","stargazerCount":31830}},
@@ -103,7 +103,7 @@ func TestExportRenamesTheUncategorizedSection(t *testing.T) {
 func TestExportSortsByName(t *testing.T) {
 	// Two repositories in one list, given in descending star order, so only a
 	// name sort can reorder them.
-	bodies := []string{
+	bodies := []interface{}{
 		`{"data":{"viewer":{"lists":{"pageInfo":{"hasNextPage":false},"nodes":[
 			{"id":"L_1","name":"Tools","slug":"tools","items":{"totalCount":2}}]}}}}`,
 		`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[
@@ -125,7 +125,7 @@ func TestExportSortsByName(t *testing.T) {
 }
 
 func TestExportSortsByStarsByDefault(t *testing.T) {
-	bodies := []string{
+	bodies := []interface{}{
 		`{"data":{"viewer":{"lists":{"pageInfo":{"hasNextPage":false},"nodes":[
 			{"id":"L_1","name":"Tools","slug":"tools","items":{"totalCount":2}}]}}}}`,
 		`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[
@@ -279,8 +279,8 @@ func TestExportOfAnEmptyAccount(t *testing.T) {
 
 func TestExportNamesTheListItFailedOn(t *testing.T) {
 	stubGitHub(t, twoLists,
-		`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[]}}}}`,
-		`{"errors":[{"type":"NOT_FOUND","message":"gone"}]}`,
+		listItems{"L_1", `{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[]}}}}`},
+		listItems{"L_2", `{"errors":[{"type":"NOT_FOUND","message":"gone"}]}`},
 	)
 
 	_, err := run(t, "export")

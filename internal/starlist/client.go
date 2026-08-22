@@ -13,6 +13,12 @@ const pageSize = 100
 // Client talks to the GitHub GraphQL API about star lists.
 type Client struct {
 	gql *api.GraphQLClient
+
+	// Progress, when set, is called after every fetched page with how many
+	// items are in hand and how many the connection holds in total. Walking a
+	// large star list or star page takes dozens of round trips, so long
+	// running commands use it to show where they are.
+	Progress func(fetched, total int)
 }
 
 // NewClient builds a client from the gh CLI authentication.
@@ -56,6 +62,23 @@ func withScopeHint(err error) error {
 		}
 	}
 	return err
+}
+
+// withProgress returns a copy of the client reporting page boundaries to fn.
+// The copy shares the HTTP client underneath, so making one per goroutine is
+// cheap and lets several connections be walked at once without their page
+// counts landing on the same hook.
+func (c *Client) withProgress(fn func(fetched, total int)) *Client {
+	clone := *c
+	clone.Progress = fn
+	return &clone
+}
+
+// report forwards a page boundary to the Progress hook, if there is one.
+func (c *Client) report(fetched, total int) {
+	if c.Progress != nil {
+		c.Progress(fetched, total)
+	}
 }
 
 // pageLimit returns how many items to ask for, honoring an overall limit of

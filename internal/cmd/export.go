@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/cli/go-gh/v2/pkg/text"
 	"github.com/eggplants/gh-starlist/internal/render"
 	"github.com/eggplants/gh-starlist/internal/starlist"
 	"github.com/spf13/cobra"
@@ -20,6 +21,8 @@ func newExportCmd() *cobra.Command {
 		outputPath      string
 		uncategorized   string
 		skipUncategoriz bool
+		quiet           bool
+		jobs            int
 	)
 
 	cmd := &cobra.Command{
@@ -43,25 +46,38 @@ With --template, the generated Markdown replaces the <!-- gh-starlist-export -->
 			if err != nil {
 				return err
 			}
+
+			// Walking every list of a large account takes a while, so report
+			// where we are on stderr while stdout stays the export itself.
+			bar := newProgress(quiet)
+			defer bar.done()
+			client.Progress = bar.update
+
+			bar.stage("Finding star lists")
 			lists, err := client.Lists(user, 0)
+			if err != nil {
+				return err
+			}
+
+			// The lists are independent, so they are read several at a time
+			// rather than one after another.
+			bar.stage("Reading %s", text.Pluralize(len(lists), "star list"))
+			listRepos, err := client.ListReposAll(lists, jobs, bar.update)
 			if err != nil {
 				return err
 			}
 
 			listed := map[string]bool{}
 			sections := make([]render.Section, 0, len(lists)+1)
-			for _, list := range lists {
-				repos, err := client.ListRepos(list.ID, 0)
-				if err != nil {
-					return fmt.Errorf("reading list %q: %w", list.Slug, err)
-				}
-				for _, repo := range repos {
+			for index, list := range lists {
+				for _, repo := range listRepos[index] {
 					listed[strings.ToLower(repo.NameWithOwner)] = true
 				}
-				sections = append(sections, render.Section{Name: list.Name, Repos: repos})
+				sections = append(sections, render.Section{Name: list.Name, Repos: listRepos[index]})
 			}
 
 			if !skipUncategoriz {
+				bar.stage("Reading starred repositories")
 				starred, err := client.Starred(user, 0)
 				if err != nil {
 					return err
@@ -74,6 +90,8 @@ With --template, the generated Markdown replaces the <!-- gh-starlist-export -->
 				}
 				sections = append(sections, render.Section{Name: uncategorized, Repos: rest})
 			}
+
+			bar.done()
 
 			for i := range sections {
 				sorter(sections[i].Repos)
@@ -109,6 +127,8 @@ With --template, the generated Markdown replaces the <!-- gh-starlist-export -->
 	cmd.Flags().StringVarP(&outputPath, "output", "o", "", "Write to this file instead of stdout")
 	cmd.Flags().StringVar(&uncategorized, "uncategorized-title", "Uncategorized", "Heading for starred repositories in no list")
 	cmd.Flags().BoolVar(&skipUncategoriz, "no-uncategorized", false, "Omit the section of starred repositories in no list")
+	cmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "Do not show fetch progress on stderr")
+	cmd.Flags().IntVarP(&jobs, "jobs", "j", starlist.DefaultWorkers, "How many star lists to read at once")
 	return cmd
 }
 

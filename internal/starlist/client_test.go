@@ -4,16 +4,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/cli/go-gh/v2/pkg/api"
 )
 
 type stubTransport struct {
+	mutex  sync.Mutex
 	bodies []string
+	byList map[string][]string
 	calls  int
 	// sent records every request payload, so tests can assert on the query and
 	// the variables the client built.
@@ -27,22 +31,24 @@ type gqlRequest struct {
 }
 
 func (s *stubTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	var recorded gqlRequest
 	if req.Body != nil {
 		payload, err := io.ReadAll(req.Body)
 		if err != nil {
 			return nil, err
 		}
-		var recorded gqlRequest
 		if err := json.Unmarshal(payload, &recorded); err != nil {
 			return nil, err
 		}
-		s.sent = append(s.sent, recorded)
 	}
-	if s.calls >= len(s.bodies) {
-		return nil, errors.New("unexpected extra request")
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.sent = append(s.sent, recorded)
+	body, err := s.answer(recorded)
+	if err != nil {
+		return nil, err
 	}
-	body := s.bodies[s.calls]
-	s.calls++
 	return &http.Response{
 		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewBufferString(body)),
@@ -51,7 +57,7 @@ func (s *stubTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}, nil
 }
 
-func newTestClient(t *testing.T, bodies ...string) *Client {
+func newTestClient(t *testing.T, bodies ...interface{}) *Client {
 	t.Helper()
 	client, _ := newRecordingClient(t, bodies...)
 	return client
@@ -59,9 +65,10 @@ func newTestClient(t *testing.T, bodies ...string) *Client {
 
 // newRecordingClient is newTestClient plus the transport, for tests that assert
 // on what was actually sent.
-func newRecordingClient(t *testing.T, bodies ...string) (*Client, *stubTransport) {
+func newRecordingClient(t *testing.T, bodies ...interface{}) (*Client, *stubTransport) {
 	t.Helper()
-	transport := &stubTransport{bodies: bodies}
+	ordered, byList := split(bodies)
+	transport := &stubTransport{bodies: ordered, byList: byList}
 	gql, err := api.NewGraphQLClient(api.ClientOptions{
 		Host:      "github.com",
 		AuthToken: "test",
@@ -233,4 +240,50 @@ func TestNewClientWithOptionsKeepsTheCallersHeaders(t *testing.T) {
 	if len(options.Headers) != 1 {
 		t.Errorf("the caller's headers changed: %v", options.Headers)
 	}
+}
+
+// listItems binds a canned response to the star list it answers for. Star
+// lists are read in parallel, so a response that belongs to one of them cannot
+// be matched by arrival order.
+type listItems struct {
+	id   string
+	body string
+}
+
+// answer picks the response for a request: the queue of the star list it asks
+// about when the test bound one, the next positional body otherwise. The
+// caller holds the mutex.
+func (s *stubTransport) answer(request gqlRequest) (string, error) {
+	if id, ok := request.Variables["listId"].(string); ok && len(s.byList) > 0 {
+		queue := s.byList[id]
+		if len(queue) == 0 {
+			return "", fmt.Errorf("no canned response left for list %s", id)
+		}
+		s.byList[id] = queue[1:]
+		return queue[0], nil
+	}
+	if s.calls >= len(s.bodies) {
+		return "", errors.New("unexpected extra request")
+	}
+	body := s.bodies[s.calls]
+	s.calls++
+	return body, nil
+}
+
+// split sorts canned responses into the positional queue and the per-list
+// ones, so a test can mix both.
+func split(bodies []interface{}) ([]string, map[string][]string) {
+	ordered := make([]string, 0, len(bodies))
+	byList := map[string][]string{}
+	for _, body := range bodies {
+		switch body := body.(type) {
+		case listItems:
+			byList[body.id] = append(byList[body.id], body.body)
+		case string:
+			ordered = append(ordered, body)
+		default:
+			panic(fmt.Sprintf("unsupported canned response %T", body))
+		}
+	}
+	return ordered, byList
 }

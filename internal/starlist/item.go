@@ -41,6 +41,7 @@ query ListItems($listId: ID!, $first: Int!, $after: String) {
 	node(id: $listId) {
 		... on UserList {
 			items(first: $first, after: $after) {
+				totalCount
 				pageInfo { hasNextPage endCursor }
 				nodes { ... on Repository { %s } }
 			}
@@ -60,8 +61,9 @@ query ListItems($listId: ID!, $first: Int!, $after: String) {
 		var response struct {
 			Node struct {
 				Items struct {
-					PageInfo pageInfo
-					Nodes    []repoNode
+					TotalCount int
+					PageInfo   pageInfo
+					Nodes      []repoNode
 				}
 			}
 		}
@@ -71,6 +73,7 @@ query ListItems($listId: ID!, $first: Int!, $after: String) {
 		for _, node := range response.Node.Items.Nodes {
 			repos = append(repos, node.toRepo())
 		}
+		c.report(len(repos), response.Node.Items.TotalCount)
 		if !response.Node.Items.PageInfo.HasNextPage {
 			break
 		}
@@ -157,13 +160,13 @@ type Membership map[string][]string
 
 // Membership builds the reverse index of the given lists.
 func (c *Client) Membership(lists []List) (Membership, error) {
+	repos, err := c.ListReposAll(lists, DefaultWorkers, nil)
+	if err != nil {
+		return nil, err
+	}
 	membership := Membership{}
-	for _, list := range lists {
-		repos, err := c.ListRepos(list.ID, 0)
-		if err != nil {
-			return nil, fmt.Errorf("reading list %q: %w", list.Slug, err)
-		}
-		for _, repo := range repos {
+	for index, list := range lists {
+		for _, repo := range repos[index] {
 			key := strings.ToLower(repo.NameWithOwner)
 			membership[key] = append(membership[key], list.ID)
 		}

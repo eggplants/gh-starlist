@@ -178,12 +178,13 @@ func TestStar(t *testing.T) {
 }
 
 func TestMembershipIndexesEveryList(t *testing.T) {
-	// One request per list, in order; a repository in two lists gets both IDs.
+	// One request per list, all in flight at once; a repository in two lists
+	// gets both IDs, in list order whichever request answers first.
 	client := newTestClient(t,
-		`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},
-			"nodes":[{"nameWithOwner":"cli/cli"},{"nameWithOwner":"BurntSushi/ripgrep"}]}}}}`,
-		`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},
-			"nodes":[{"nameWithOwner":"CLI/CLI"}]}}}}`,
+		listItems{"L_1", `{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},
+			"nodes":[{"nameWithOwner":"cli/cli"},{"nameWithOwner":"BurntSushi/ripgrep"}]}}}}`},
+		listItems{"L_2", `{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},
+			"nodes":[{"nameWithOwner":"CLI/CLI"}]}}}}`},
 	)
 
 	membership, err := client.Membership([]List{
@@ -214,8 +215,8 @@ func TestMembershipIndexesEveryList(t *testing.T) {
 
 func TestMembershipNamesTheFailingList(t *testing.T) {
 	client := newTestClient(t,
-		`{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[]}}}}`,
-		`{"errors":[{"type":"NOT_FOUND","message":"gone"}]}`,
+		listItems{"L_1", `{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false},"nodes":[]}}}}`},
+		listItems{"L_2", `{"errors":[{"type":"NOT_FOUND","message":"gone"}]}`},
 	)
 
 	_, err := client.Membership([]List{{ID: "L_1", Slug: "one"}, {ID: "L_2", Slug: "two"}})
