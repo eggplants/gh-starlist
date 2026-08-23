@@ -16,7 +16,7 @@
 
 A [GitHub CLI](https://cli.github.com) extension for [GitHub Star List](https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars#organizing-starred-repositories-with-lists)
 
-_For information on the GitHub API we're using, see [QUERIES.md](QUERIES.md)._
+_For information on the GitHub API related to Star List operations, see [QUERIES.md](QUERIES.md)._
 
 ## Installation
 
