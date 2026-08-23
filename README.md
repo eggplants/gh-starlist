@@ -27,6 +27,8 @@ gh auth status | grep -qF "'user'" || gh auth refresh -h github.com -s user
 
 ### Skill
 
+`/categorize-stars` : Automatically categorize repositories you've starred that aren't included in any of your lists.
+
 ```bash
 gh skill install eggplants/gh-starlist categorize-stars
 ```
