@@ -1,5 +1,9 @@
 # API for GitHub Star List (2026-08-23)
 
+Discussion: <https://github.com/orgs/community/discussions/8293>
+
+## Setup
+
 ```bash
 gh auth status | grep -qF "'user'" || gh auth refresh -h github.com -s user
 ```
