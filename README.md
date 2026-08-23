@@ -25,6 +25,12 @@ gh extension install eggplants/gh-starlist
 gh auth status | grep -qF "'user'" || gh auth refresh -h github.com -s user
 ```
 
+### Skill
+
+```bash
+gh skill install eggplants/gh-starlist categorize-stars
+```
+
 ## Usage
 
 ```console
